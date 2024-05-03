@@ -1,3 +1,4 @@
+# instalar bibliotecas
 install.packages("dplyr")
 library(dplyr)
 
@@ -7,8 +8,10 @@ library(knitr)
 install.packages("ggplot2")
 library(ggplot2)
 
+# carga de datos
 data <- read.csv("hotel_bookings.csv", header= TRUE, stringsAsFactors = FALSE)
 
+# inspección de datos (i)
 sin_valor <- function(x) {
   sum = 0
   for(i in 1:ncol(x)) {
@@ -18,18 +21,22 @@ sin_valor <- function(x) {
 
 sin_valor(data)
 
+# limpieza de datos
 Data.limpia <- na.omit(data)
 
 data <- Data.limpia
 
+# inspección de datos (ii)
 sin_valor(data)
 
 str(data)
 
+# Utilizamos head( ) y tail( ) para ver parte de la data
 head(data)
 
 tail(data)
 
+# Pregunta N°1: ¿Cuántas reservas se realizan por tipo de hotel? o ¿Qué tipo de hotel prefiere la gente?
 table_hotel <- data %>% count(hotel)
 table_hotel %>%
   ggplot(aes(x = hotel, y = n))+
@@ -40,6 +47,7 @@ table_hotel %>%
     labs(title = "Cantidad de reservas realizadas según el tipo de hotel")
 table_hotel
 
+# En el caso se quiera saber si las personas por su país de origen eligen algún tipo de hotel:
 table_hotel_country <- table(data$country, data$hotel)
 
 head(table_hotel_country)
@@ -52,7 +60,7 @@ axis(1, at = 1:nrow(table_hotel_country), labels = rownames(table_hotel_country)
 
 legend("topright", legend = colnames(table_hotel_country), lty = 1, col = c("blue", "red"), cex = 0.8)
 
-
+# Pregunta N°2: ¿Está aumentando la demanda con el tiempo?
 aumento_demanda <- function(hotel){
     hotel_data <- hotel %>%
         mutate(arrival_date_month = factor(arrival_date_month, levels = month.name)) %>%
@@ -74,6 +82,7 @@ aumento_demanda <- function(hotel){
 
 aumento_demanda(data)
 
+# Pregunta N°3: ¿Cuándo se producen las temporadas de reservas: alta, media y baja?
 # Considerando para hallar la menor demanda de reservas se encontrará por mes por año
 reservas_por_mes_por_anio <- table(data$arrival_date_month, data$arrival_date_year)
 reservas_por_mes_por_anio
@@ -143,6 +152,7 @@ ggplot(df_meses_anio_destacados, aes(x = Mes, y = Cantidad, fill = Mes)) +
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank())
 
+# Pregunta N°4: ¿Cuándo es menor la demanda de reservas?
 # Considerando para hallar la menor demanda de reservas se encontrará por mes por año
 reservas_por_mes_por_anio <- table(data$arrival_date_month, data$arrival_date_year)
 reservas_por_mes_por_anio
@@ -181,6 +191,7 @@ ggplot(df_meses_anio, aes(x = Mes, y = Cantidad, fill = Mes)) +
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank())
 
+# Pregunta N°5: ¿Cuántas reservas incluyen niños y/o bebes?
 reservas_infantes <- data %>% select(children, babies)
 reservas_infantes$niños_o_bebes <- ifelse(reservas_infantes$children > 0 | reservas_infantes$babies >0, "Si", "No")
 table(reservas_infantes$niños_o_bebes)
@@ -193,6 +204,7 @@ ggplot(reservas_infantes,aes(x = "", y = n, fill = niños_o_bebes))+
   geom_text(aes(label = paste0(round(n/sum(n)*100, 2), "%")), position = position_stack(vjust = 0.5),colours = "white", size = 5) +
   labs(title = "Porcentaje de reservas que tienen niños y/o bebes")
 
+# Pregunta N°6: ¿Es importante contar con espacios de estacionamiento?
 filtered_parking_data<-data%>%filter(!is.na(required_car_parking_spaces),required_car_parking_spaces %in% c(0, 1))
 requires_parking_space<-nrow(filtered_parking_data%>%filter(required_car_parking_spaces==1))
 dont_require_parking_space<-nrow(filtered_parking_data%>%filter(required_car_parking_spaces==0))
@@ -218,6 +230,8 @@ ggplot(parking_data, aes(x = Category, y = Proportion, fill = Category)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+# Pregunta N°7: ¿En qué meses del año se producen más cancelaciones de reservas?
+# Para ello primero debemos analizar cuantas cancelaciones se realizaron por cada mes, según el año
 library(ggplot2)
 library(dplyr)
 
@@ -240,6 +254,7 @@ ggplot(cancelaciones_2015_2017, aes(x = as.factor(arrival_date_month), y = n_can
 
 head(cancelaciones_2015_2017)
 
+# Ahora que conocemos las cancelaciones de cada año, tendremos el total de cancelaciones por mes en total
 # Calcular el total de cancelaciones por mes en total
 cancelaciones_totales_por_mes <- cancelaciones_2015_2017 %>%
   group_by(arrival_date_month) %>%
@@ -261,7 +276,9 @@ ggplot(cancelaciones_totales_por_mes, aes(x = arrival_date_month, y = total_canc
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotar las etiquetas del eje x
 
+# PREGUNTAS ADICIONALES
 
+# ¿Cuál es el porcentaje de cancelaciones de reservas en hoteles tipo Resort Hotel en comparacion con los de City Hotel?
 # Filtrar datos para Resort Hotel y City Hotel
 resort_data <- data[data$hotel == "Resort Hotel", ]
 city_data <- data[data$hotel == "City Hotel", ]
@@ -298,8 +315,7 @@ hotel_types <- c("Resort Hotel", "City Hotel")
 # Graficar el pastel
 pie(cancelation_percentages, labels = hotel_types, main = "Porcentaje de cancelaciones por tipo de hotel")
 
-
-
+# ¿Cuál es el canal de distribución (DistributionChannel) más utilizado?
 canales_por_año <- canales_por_año %>%
   filter(distribution_channel != "Undefined") %>%
   arrange(arrival_date_year, desc(count))
